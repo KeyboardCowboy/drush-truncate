@@ -94,12 +94,10 @@ function drush_truncate($table_names) {
   // We are not bootstrapping Drupal, so build it manually.
   $tables = count($truncate) === 1 ? dt('table') : dt('tables');
 
-  // Make sure the user is cool with this.
-  foreach ($truncate as $table) {
-    $args = array('@db' => $db, '@table' => $table);
+  if ($interactive) {
+    foreach ($truncate as $table) {
+      $args = array('@db' => $db, '@table' => $table);
 
-    // Confirm each truncation.
-    if ($interactive) {
       if (drush_confirm(dt("Truncate @db.@table?", $args))) {
         db_query("TRUNCATE TABLE {{$table}}");
         drush_log(dt("Truncated @db.@table.", $args), 'success');
@@ -108,19 +106,21 @@ function drush_truncate($table_names) {
         drush_log(dt("Skipped @db.@table.", $args), 'ok');
       }
     }
-    // Confirm the process as a whole.
-    else {
-      // Print a list of tables to be truncated.
-      drush_print_format($truncate, 'list');
+  }
+  else {
+    // Print a list of tables to be truncated.
+    drush_print_format($truncate, 'list');
 
-      if (drush_confirm(dt("Truncate !num !tables on !db?", array('!num' => count($truncate), '!db' => $db, '!tables' => $tables)))) {
+    if (drush_confirm(dt("Truncate !num !tables on !db?", array('!num' => count($truncate), '!db' => $db, '!tables' => $tables)))) {
+      foreach ($truncate as $table) {
+        $args = array('@db' => $db, '@table' => $table);
+
         db_query("TRUNCATE TABLE {{$table}}");
-        drush_log(dt("Truncated @db.@table", $args), 'success');
+        drush_log(dt("Truncated @db.@table.", $args), 'success');
       }
-      // Kick out.
-      else {
-        return drush_user_abort();
-      }
+    }
+    else {
+      return drush_user_abort();
     }
   }
 }
