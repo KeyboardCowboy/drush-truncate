@@ -80,8 +80,12 @@ function drush_truncate($table_names) {
     return drush_log(dt("There are no tables matching this pattern."), 'warning');
   }
 
-  // Print a list of tables to be truncated.
-  drush_print_format($truncate, 'list');
+  // Print the number of tables found.
+  drush_print(dt("Found !cnt tables matching @pattern on @db.", array(
+    '!cnt' => count($truncate),
+    '@pattern' => $table_names,
+    '@db' => $db,
+  )));
 
   // See if we have an option for interactive mode.
   $interactive = drush_get_option('interactive', FALSE);
@@ -105,13 +109,18 @@ function drush_truncate($table_names) {
       }
     }
     // Confirm the process as a whole.
-    elseif (drush_confirm(dt("Truncate !num !tables on !db?", array('!num' => count($truncate), '!db' => $db, '!tables' => $tables)))) {
-      db_query("TRUNCATE TABLE {{$table}}");
-      drush_log(dt("Truncated @db.@table", $args), 'success');
-    }
-    // Kick out.
     else {
-      return drush_user_abort();
+      // Print a list of tables to be truncated.
+      drush_print_format($truncate, 'list');
+
+      if (drush_confirm(dt("Truncate !num !tables on !db?", array('!num' => count($truncate), '!db' => $db, '!tables' => $tables)))) {
+        db_query("TRUNCATE TABLE {{$table}}");
+        drush_log(dt("Truncated @db.@table", $args), 'success');
+      }
+      // Kick out.
+      else {
+        return drush_user_abort();
+      }
     }
   }
 }
