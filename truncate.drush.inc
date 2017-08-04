@@ -10,7 +10,7 @@ function truncate_drush_command() {
     'description' => 'Truncate one or a series of database tables.',
     'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_DATABASE,
     'arguments' => array(
-      'tables' => 'A single table or comma separated list.  An asterisk (*) can be used as a wildcard.',
+      'tables' => 'A single table or space separated list.  An asterisk (*) can be used as a wildcard.',
     ),
     'options' => array(
       'interactive' => dt("Interactive mode.  Confirm each table before truncating."),
@@ -27,9 +27,10 @@ function truncate_drush_command() {
 /**
  * Command callback.
  */
-function drush_truncate($table_names) {
+function drush_truncate($arg) {
   $truncate = array();
   $dne = array();
+  $table_names = func_get_args();
 
   // Resolve the site alias.
   $alias = drush_get_context(DRUSH_TARGET_SITE_ALIAS, '@self');
@@ -47,8 +48,10 @@ function drush_truncate($table_names) {
   }
 
   // First, split the table string.
-  $tables = explode(',', $table_names);
-  foreach ($tables as $table) {
+  // $tables = explode(' ', $table_names);
+  foreach ($table_names as $table) {
+    $table = trim($table);
+
     // Check for wildcards and lookup all tables that match the pattern.
     if (strstr($table, '*')) {
       $table_like = str_replace('*', '%', $table);
